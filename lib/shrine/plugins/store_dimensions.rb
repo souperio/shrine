@@ -73,9 +73,16 @@ class Shrine
       module InstanceMethods
         # We update the metadata with "width" and "height".
         def extract_metadata(io, **options)
-          width, height = self.class.extract_dimensions(io)
+          begin
+            width, height = self.class.extract_dimensions(io)
 
-          super.merge!("width" => width, "height" => height)
+          rescue FastImage::UnknownImageType
+            super
+
+          else
+            super.merge!("width" => width, "height" => height)
+
+          end
         end
       end
 
@@ -116,6 +123,8 @@ class Shrine
 
           begin
             FastImage.size(io, raise_on_failure: true)
+          rescue FastImage::UnknownImageType
+            raise
           rescue FastImage::FastImageException => error
             on_error(error)
           end
